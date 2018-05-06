@@ -5,14 +5,13 @@ from tempfile import TemporaryFile
 
 import pandas as pd
 import numpy as np
-import matplotlib as mpl
-import matplotlib.pyplot as plt
 import csv
 
 from scipy.io import loadmat
 from scipy.optimize import minimize
 
 from datetime import datetime
+
 
 @app.route('/')
 @app.route('/index')
@@ -77,8 +76,6 @@ def gradient(theta, X, y, learningRate):
 
 	result = np.array(grad).ravel()
 
-	print np.shape(result)
-
 	return result
 
 def oneVsAll(X, y, num_labels, lambda_reg):
@@ -128,7 +125,7 @@ def predict_all(X, all_theta):
 	return h_argmax
 
 def getY():
-	with open('training-results.csv', 'rb') as csvfile:
+	with open('app/training-results.csv', 'r') as csvfile:
 		spamreader = csv.reader(csvfile)
 		result = []
 		for row in spamreader:
@@ -142,7 +139,7 @@ def unix_time_millis(dt):
 	return (dt - epoch).total_seconds() * 1000.0
 
 def getX():
-	with open('heartbeat-training.csv', 'rb') as csvfile:
+	with open('app/heartbeat-training.csv', 'r') as csvfile:
 		spamreader = csv.reader(csvfile)
 		result = []
 		for row in spamreader:
@@ -183,16 +180,18 @@ def scenarios():
 
 	all_theta = one_vs_all(X, y, 4, 1)
 
-	print all_theta, np.shape(all_theta)
+	print(all_theta, np.shape(all_theta))
 
-	test_x = req.data
-	test_x = np.array(test_x, dtype=np.float128)
-	new_x = np.c_[np.ones((test_x.shape[0],1)), test_x]
-	new_x = np.c_[np.ones((new_x.shape[0],1)), new_x]
+	scenario = 3
+	if request.data:
+		test_x = request.data
+		test_x = np.array(test_x, dtype=np.float128)
+		new_x = np.c_[np.ones((test_x.shape[0],1)), test_x]
+		new_x = np.c_[np.ones((new_x.shape[0],1)), new_x]
 
-	prediction =predict_all(new_x, all_theta)
+		scenario = predict_all(new_x, all_theta)
 
-	return jsonify(scenario=prediction)
+	return jsonify(scenario=scenario)
 
 def getAccuracy():
 	y = getY()
@@ -205,4 +204,4 @@ def getAccuracy():
 	correct = [1 if a == b else 0 for (a, b) in zip(y_pred, y)]  
 	accuracy = (sum(map(int, correct)) / float(len(correct)))  
 
-	print 'accuracy = {0}%'.format(accuracy * 100)
+	print('accuracy = {0}%'.format(accuracy * 100))
